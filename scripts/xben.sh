@@ -161,6 +161,11 @@ for name, body in (spec.get("services") or {}).items():
                         )
                         with open(seeded, "w") as out:
                             out.write(body_text)
+                        # World-readable: the file is bind-mounted into the DB
+                        # image's docker-entrypoint-initdb.d, and under rootless
+                        # Docker the container's mysql user cannot read a 0600
+                        # file, so the seed (and the flag it carries) never load.
+                        os.chmod(seeded, 0o644)
                         mounts.append(
                             f"{seeded}:/docker-entrypoint-initdb.d/{os.path.basename(item)}:ro")
             if mounts:
