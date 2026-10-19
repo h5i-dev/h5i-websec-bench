@@ -9,7 +9,7 @@ The repository currently covers three corpora:
 
 | Corpus | Solved | Details |
 | --- | ---: | --- |
-| [XBOW Validation Benchmarks](https://github.com/xbow-engineering/validation-benchmarks) | 100/104 | [`examples/xben/README.md`](examples/xben/README.md) |
+| [XBOW Validation Benchmarks](https://github.com/xbow-engineering/validation-benchmarks) | 99/104 | [`examples/xben-proxy/README.md`](examples/xben-proxy/README.md) |
 | [Argus Validation Benchmarks](https://github.com/pensarai/argus-validation-benchmarks) | 54/60 | [`examples/argus/README.md`](examples/argus/README.md) |
 | [Cybench](https://github.com/andyzorigin/cybench) | 8/8 web tasks | [`examples/cybench/README.md`](examples/cybench/README.md) |
 

@@ -2,32 +2,28 @@
 
 Worked solutions to the [XBOW Validation
 Benchmarks](https://github.com/xbow-engineering/validation-benchmarks), using
-h5i in **proxy mode**: a real external Chromium, driven by
+h5i's capture proxy: a real external Chromium, driven by
 [`agent-browser`](https://github.com/h5i-dev/agent-browser), with its HTTP/S
-traffic captured through `h5i browser proxy`.
+traffic captured through `h5i browser proxy`. The exploit step is always `h5i
+websec` on the captured traffic — inspect, replay, diff, match — so what the
+script demonstrates is the attack, not a scripted HTTP client.
 
-The sibling directory [`../xben/`](../xben/) solves the same corpus with h5i's
-own browser (`h5i browser open --capture`). These scripts are the proxy-mode
-twins. The exploit is identical — inspect and resend the captured request with
-`h5i websec` — and only the capture path differs:
+Since h5i 0.5.0 every browser session *is* a Chromium behind the capture proxy
+(the old in-process browser and its `--capture` flag were removed), so these are
+the canonical worked solutions for this corpus. A session can be started two
+ways; these scripts use the explicit form so the pieces are visible:
 
 ```
-          examples/xben/                     examples/xben-proxy/
-  capture  h5i browser open --capture        h5i browser proxy  +  agent-browser
-  drive    h5i browser type/click/navigate   agent-browser open/fill/click
-  attack   h5i websec replay / match         h5i websec replay / match   (same)
+  explicit (these scripts)              one command (0.5.0)
+  h5i browser proxy  +  agent-browser   h5i browser open URL
 ```
 
-Proxy mode is what you use when the target needs a full browser engine — real
-JavaScript, a login the page performs itself — but you still want every request
-recorded and replayable. h5i runs a loopback capture proxy; agent-browser is
-pointed at it; the messages land in the same session store that `h5i websec`
-reads, so replay, diff and match work exactly as in the native-browser
-examples.
+Either way the messages land in the session store that `h5i websec` reads, so
+replay, diff and match work the same.
 
 ## Setup
 
-In addition to the corpus and Docker (see [`../xben/README.md`](../xben/README.md)):
+In addition to the corpus and Docker:
 
 * **h5i** on `$PATH` (or `$H5I`) with the `websec` plugin installed.
 * **agent-browser** on `$PATH`, with a Chromium it can launch. If it cannot find
@@ -48,9 +44,10 @@ means the exact expected string came back.
 
 [`_proxy-lib.sh`](./_proxy-lib.sh) holds the boilerplate every script sources:
 
-* `proxy_start URL` — start the capture proxy and point agent-browser at it
-  (headless, no-sandbox, loopback routed through the proxy). Registers cleanup
-  on exit.
+* `proxy_start URL [extra-origin …]` — start the capture proxy and point
+  agent-browser at it (headless, no-sandbox, loopback routed through the proxy).
+  Extra origins are added to the allowlist for multi-service targets. Registers
+  cleanup on exit.
 * `ab …` — agent-browser bound to this session.
 * `go URL` — open a page and wait for the DOM, so a step does not race a cold
   Chromium or an in-flight navigation.
@@ -60,22 +57,52 @@ means the exact expected string came back.
 * `replay_flag REQ_ID` — re-send a captured request and print the flag from its
   response. Needed when the flag only appears after some earlier request changed
   server state, so the originally captured response predates the change.
-* `print_flag` — scan stored response bodies for a flag, newest first.
+* `print_flag` — scan every stored response for a flag (`h5i websec match
+  --all`).
+
+### Authenticated replays: `--as`
+
+`h5i websec replay` re-sends a stored request's exact bytes and does **not** pull
+cookies from the session jar — that is opt-in. So when a script logs in with one
+replay and then acts as that user with another, the second replay must carry the
+login cookie explicitly:
+
+```bash
+# log in (the server's Set-Cookie goes into this session's jar)
+h5i websec replay "$BASE" --create --session "$S" --as "$S" --set method=POST --set path=/login ...
+# act as the logged-in user: --as sends this session's jar cookies
+h5i websec replay "$BASE" --create --session "$S" --as "$S" --set method=GET --set path=/orders/42 ...
+```
+
+`--as "$S"` injects session `S`'s own `Cookie`/`Authorization`; `--as other`
+borrows another session's identity (the IDOR "do it as user B" move). Where a
+request sets a forged credential explicitly (e.g. an `alg=none` JWT in a
+cookie), do **not** add `--as` on that step — it would re-inject the real token
+and overwrite the forged one.
 
 ## Verified scripts vs. drafts
 
 * Scripts in **this directory** are run against a freshly built instance and
-  verified to return the corpus’s exact flag. So far 93: benchmarks 001, 002, 003, 004, 005, 006, 007, 008, 009, 010, 011, 012, 013, 014, 015, 016, 017, 018, 019, 020, 021, 022, 024, 025, 026, 027, 028, 029, 031, 032, 033, 034, 036, 037, 038, 039, 040, 041, 042, 043, 044, 045, 046, 047, 048, 049, 050, 051, 052, 053, 054, 055, 056, 057, 058, 059, 060, 061, 062, 063, 064, 065, 067, 068, 069, 070, 071, 072, 073, 074, 075, 076, 077, 078, 079, 080, 083, 085, 086, 087, 089, 090, 091, 093, 094, 096, 098, 099, 100, 101, 102, 103, 104 — the IDOR, reflected-XSS, SQLi (incl. blind boolean/char-exfil), SSTI, LFI, SSRF, file-upload-to-RCE, OS-command-injection, GraphQL and type-juggling families, where the attack is a single replayed request (or a short browser
-  login followed by one).
-* **[`draft/`](./draft/)** holds the remaining 2 benchmarks, distilled
-  automatically from the recorded solver transcript. They capture the real
-  proxy-mode exploit (the `h5i websec` steps are the attack) and each one's
-  header carries the agent's own account of the vulnerability. They are **not
-  yet re-run against a fresh instance**: request ids (`req_N`) and snapshot refs
-  (`@eN`) are from the recorded session and generally need re-deriving with
-  `h5i websec requests`. A draft is promoted into this directory once it has
-  been fixed up and verified. Four drafts whose payloads do not survive
-  mechanical shell reconstruction (tricky quoting) record their commands as
-  comments instead of running them.
+  verified to return the corpus's exact flag — 99 benchmarks: 001–022, 024–104
+  except 023, 030, 066, 088, 092 (the IDOR, reflected-XSS, SQLi incl. blind
+  boolean/char-exfil, SSTI, LFI, SSRF, file-upload-to-RCE, OS/argument command
+  injection, GraphQL, JWT, deserialization and type-juggling families). Most are
+  a single replayed request, or a short login followed by one; the multi-step
+  ones (padding oracle, CBC bitflip, pearcmd LFI→RCE, Struts OGNL) drive several
+  `h5i websec` steps.
+* **[`draft/`](./draft/)** holds `023`, distilled from a recorded solver
+  transcript but not reproduced end to end: the Jinja SSTI RCE gadget
+  (`config.__init__.__globals__.os.popen`) fires, but a reliable script is still
+  blocked by flaky login-session persistence across fresh instances and by
+  `/flag` being a 22-byte decoy. It is left in `draft/` rather than labelled
+  solved.
 
-The two remaining drafts are **not yet reproduced end to end** (they are not build-stack differences — the runs were on this same host). `023` is a sandboxed Jinja SSTI whose RCE gadget (`config.__init__.__globals__.os.popen`) does reproduce, but a reliable script is still blocked by flaky login-session persistence across fresh instances and by `/flag` being a 22-byte decoy (the real flag's location in the container is unconfirmed). `082` is an nginx-njs chain whose internal-eval trigger has not yet been pinned down. Both are left in `draft/` rather than labelled solved.
+The remaining corpus benchmarks (030, 066, 088, 092) have no worked solution
+here.
+
+### A note on `xben-084`
+
+`xben-084` is an **authored** worked solution, not a blind agent solve, and is
+only partly proxy-mode: the fake S3 service sits on a second published port the
+app URL does not reveal, so that port is discovered with `docker` (as the
+corpus's own tooling does) and then driven through the proxy. Its header says so.
