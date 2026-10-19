@@ -77,3 +77,5 @@ means the exact expected string came back.
   been fixed up and verified. Four drafts whose payloads do not survive
   mechanical shell reconstruction (tricky quoting) record their commands as
   comments instead of running them.
+
+The two remaining drafts are **not yet reproduced end to end** (they are not build-stack differences — the runs were on this same host). `023` is a sandboxed Jinja SSTI whose RCE gadget (`config.__init__.__globals__.os.popen`) does reproduce, but a reliable script is still blocked by flaky login-session persistence across fresh instances and by `/flag` being a 22-byte decoy (the real flag's location in the container is unconfirmed). `082` is an nginx-njs chain whose internal-eval trigger has not yet been pinned down. Both are left in `draft/` rather than labelled solved.
