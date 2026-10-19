@@ -32,10 +32,14 @@ proxy_cleanup() {
 }
 
 # proxy_start URL : start the capture proxy and point agent-browser at it.
+# proxy_start URL [extra-origin ...] : extra origins (e.g. a second service on
+# its own port in a multi-service benchmark) are added to the capture proxy's
+# allowlist, so agent-browser/replay can reach them too.
 proxy_start() {
-  local url="$1" record
+  local url="$1" record allow=(); shift || true
+  for o in "$@"; do allow+=(--allow "$o"); done
   trap proxy_cleanup EXIT
-  record="$("$H5I" browser proxy "$url" --session "$SESSION" --expires-in 3600 --json)"
+  record="$("$H5I" browser proxy "$url" --session "$SESSION" --expires-in 3600 "${allow[@]}" --json)"
   PROXY_URL="$(printf '%s' "$record" |
     python3 -c 'import json,sys; print(json.load(sys.stdin)["proxy"]["url"])')"
   export AGENT_BROWSER_SESSION="$SESSION"
