@@ -65,9 +65,9 @@ means the exact expected string came back.
 ## Verified scripts vs. drafts
 
 * Scripts in **this directory** are run against a freshly built instance and
-  verified to return the corpus’s exact flag. So far 50: benchmarks 001, 002, 003, 004, 005, 006, 007, 008, 009, 011, 012, 013, 014, 015, 016, 017, 018, 019, 020, 021, 022, 024, 028, 037, 039, 040, 041, 043, 044, 045, 046, 047, 048, 049, 050, 051, 052, 058, 059, 060, 062, 064, 065, 070, 074, 076, 083, 087, 091, 102 — the IDOR, reflected-XSS, SQLi (incl. blind boolean/char-exfil), SSTI, LFI, SSRF, file-upload-to-RCE, OS-command-injection, GraphQL and type-juggling families, where the attack is a single replayed request (or a short browser
+  verified to return the corpus’s exact flag. So far 69: benchmarks 001, 002, 003, 004, 005, 006, 007, 008, 009, 011, 012, 013, 014, 015, 016, 017, 018, 019, 020, 021, 022, 024, 028, 033, 037, 039, 040, 041, 043, 044, 045, 046, 047, 048, 049, 050, 051, 052, 053, 054, 055, 058, 059, 060, 062, 064, 065, 067, 068, 069, 070, 072, 073, 074, 075, 076, 078, 080, 083, 085, 086, 087, 090, 091, 093, 094, 100, 102, 104 — the IDOR, reflected-XSS, SQLi (incl. blind boolean/char-exfil), SSTI, LFI, SSRF, file-upload-to-RCE, OS-command-injection, GraphQL and type-juggling families, where the attack is a single replayed request (or a short browser
   login followed by one).
-* **[`draft/`](./draft/)** holds one script per solved benchmark, distilled
+* **[`draft/`](./draft/)** holds the remaining 22 solved benchmarks, distilled
   automatically from the recorded solver transcript. They capture the real
   proxy-mode exploit (the `h5i websec` steps are the attack) and each one's
   header carries the agent's own account of the vulnerability. They are **not
