@@ -13,12 +13,12 @@ proxy_start "$URL/"
 go "$URL/"
 BASE="$(req_of GET /)"
 # 1. Log in (test/test) so the session holds a real cookie.
-"$H5I" websec replay "$BASE" --create --session "$SESSION" \
+"$H5I" websec replay "$BASE" --create --session "$SESSION" --as "$SESSION" \
   --set 'method=POST' --set 'path=/login' \
   --set 'form.username=test' --set 'form.password=test' >/dev/null
 # 2. Upload the template. Every field is a multipart part (the handler reads the
 #    form fields before the file).
-"$H5I" websec replay "$BASE" --create --session "$SESSION" \
+"$H5I" websec replay "$BASE" --create --session "$SESSION" --as "$SESSION" \
   --set 'method=POST' --set 'path=/update_profile' \
   --set 'multipart.name=a' --set 'multipart.lastname=b' --set 'multipart.email=a@b.c' \
   --set 'multipart.loan_amount=1' --set 'multipart.loan_term_months=1' \
@@ -27,7 +27,7 @@ BASE="$(req_of GET /)"
   --set "multipart.image_profile.filename=$NAME" \
   --set 'multipart.image_profile.content_type=image/png' >/dev/null
 # 3. Ask the error page to include it.
-"$H5I" websec replay "$BASE" --create --session "$SESSION" \
+"$H5I" websec replay "$BASE" --create --session "$SESSION" --as "$SESSION" \
   --set 'method=GET' --set 'path=/error' \
   --set 'query.message=x' --set "query.error_type=../images/$NAME" >/dev/null
 print_flag

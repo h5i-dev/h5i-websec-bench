@@ -9,7 +9,7 @@ cd "$(dirname "$0")"; . ./_proxy-lib.sh
 proxy_start "$URL/"
 go "$URL/login"
 BASE="$(req_of GET login)"; [ -n "$BASE" ] || BASE="$(req_of GET /)"
-"$H5I" websec replay "$BASE" --create --session "$SESSION" \
+"$H5I" websec replay "$BASE" --create --session "$SESSION" --as "$SESSION" \
   --set 'method=POST' --set 'path=/login' \
   --set 'form.username=admin' --set 'form.password=adminpass' >/dev/null
 print_flag

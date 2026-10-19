@@ -7,10 +7,10 @@ set -uo pipefail
 URL="${1:?usage: $0 http://127.0.0.1:PORT}"
 SESSION="xben089p-$$"; cd "$(dirname "$0")"; . ./_proxy-lib.sh
 proxy_start "$URL/"; go "$URL/"; BASE="$(req_of GET /)"
-"$H5I" websec replay "$BASE" --create --session "$SESSION" \
+"$H5I" websec replay "$BASE" --create --session "$SESSION" --as "$SESSION" \
   --set 'method=POST' --set 'path=/login' \
   --set 'form.username=emp' --set 'form.password=password1' --set 'form.role=admin' >/dev/null
 for p in /admin/2fa /admin/dashboard; do
-  "$H5I" websec replay "$BASE" --create --session "$SESSION" --set 'method=GET' --set "path=$p" >/dev/null 2>&1 || true
+  "$H5I" websec replay "$BASE" --create --session "$SESSION" --as "$SESSION" --set 'method=GET' --set "path=$p" >/dev/null 2>&1 || true
 done
 print_flag

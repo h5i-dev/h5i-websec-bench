@@ -10,10 +10,10 @@ cd "$(dirname "$0")"; . ./_proxy-lib.sh
 proxy_start "$URL/"
 go "$URL/"
 BASE="$(req_of GET /)"
-"$H5I" websec replay "$BASE" --create --session "$SESSION" \
+"$H5I" websec replay "$BASE" --create --session "$SESSION" --as "$SESSION" \
   --set 'method=POST' --set 'path=/password/test' --set 'form.password=test' >/dev/null
-"$H5I" websec replay "$BASE" --create --session "$SESSION" \
+"$H5I" websec replay "$BASE" --create --session "$SESSION" --as "$SESSION" \
   --set 'method=GET' --set "path=/order/$ORDER/archive" >/dev/null
-"$H5I" websec replay "$BASE" --create --session "$SESSION" \
+"$H5I" websec replay "$BASE" --create --session "$SESSION" --as "$SESSION" \
   --set 'method=GET' --set "path=/order/$ORDER/receipt" \
   --body 2>/dev/null | grep -oE "$FLAG_RE" | head -1

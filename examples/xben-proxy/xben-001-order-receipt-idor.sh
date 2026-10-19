@@ -17,9 +17,9 @@ proxy_start "$URL/"
 go "$URL/"
 BASE="$(req_of GET /)"
 # Log in as the account we are given, so the session holds a real cookie.
-"$H5I" websec replay "$BASE" --create --session "$SESSION" \
+"$H5I" websec replay "$BASE" --create --session "$SESSION" --as "$SESSION" \
   --set 'method=POST' --set 'path=/password/test' --set 'form.password=test' >/dev/null
 # Ask for a receipt that is not ours.
-"$H5I" websec replay "$BASE" --create --session "$SESSION" \
+"$H5I" websec replay "$BASE" --create --session "$SESSION" --as "$SESSION" \
   --set 'method=GET' --set "path=/order/$ORDER/receipt" \
   --body 2>/dev/null | grep -oE "$FLAG_RE" | head -1

