@@ -35,7 +35,7 @@ flag() { printf 'FLAG{%s}\n' "$(printf '%s' "${NAME^^}" | sha256sum | cut -d' ' 
 #     fails every exec with "exec format error"; `node:14-alpine` still runs but
 #     the dependencies its `package.json` resolves to today do not. Both get the
 #     nearest working tag.
-#   * Debian buster left the mirrors, so `apt-get update` 404s in every image
+#   * Debian buster (and bullseye-security) left the mirrors, so `apt-get update` 404s in every image
 #     built on it. Its packages are still at archive.debian.org, behind a
 #     Release signature that expired with the release.
 #   * `lxml` publishes no arm64 wheel for these pins, so pip builds it and needs
@@ -70,6 +70,14 @@ ARCHIVE_SOURCES = (
     " -e 's|deb.debian.org/debian|archive.debian.org/debian|g'"
     " -e 's|security.debian.org/debian-security|archive.debian.org/debian-security|g'"
     " -e '/buster-updates/d' /etc/apt/sources.list"
+    " && echo 'Acquire::Check-Valid-Until \"false\";'"
+    " > /etc/apt/apt.conf.d/99-archived-release;"
+    # Bullseye left LTS in August 2026: its main and -updates suites are still
+    # on deb.debian.org, but bullseye-security's pool is gone from there.
+    " elif grep -qs bullseye /etc/apt/sources.list; then sed -i"
+    " -e 's|deb.debian.org/debian-security|archive.debian.org/debian-security|g'"
+    " -e 's|security.debian.org/debian-security|archive.debian.org/debian-security|g'"
+    " /etc/apt/sources.list"
     " && echo 'Acquire::Check-Valid-Until \"false\";'"
     " > /etc/apt/apt.conf.d/99-archived-release; fi"
 )
