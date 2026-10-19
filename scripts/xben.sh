@@ -226,11 +226,16 @@ for name, body in (spec.get("services") or {}).items():
                 lines = [line.replace(broken, working) for line in lines]
                 patched_lines = True
         if "apt-get" in original or "apt " in original:
-            for index, line in enumerate(lines):
+            # After every `FROM`, not just the first: a multi-stage build resets
+            # the filesystem per stage, so each stage that runs apt needs its own
+            # sources rewrite (e.g. a Maven builder then a Tomcat runtime).
+            rewritten = []
+            for line in lines:
+                rewritten.append(line)
                 if line.strip().upper().startswith("FROM "):
-                    lines.insert(index + 1, ARCHIVE_SOURCES)
+                    rewritten.append(ARCHIVE_SOURCES)
                     patched_lines = True
-                    break
+            lines = rewritten
         # `lxml` publishes no arm64 wheel for these pins, so pip falls back to
         # building it and stops at "Please make sure the libxml2 and libxslt
         # development packages are installed". Named rather than general: this
